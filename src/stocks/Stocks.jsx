@@ -9,40 +9,27 @@ export default function Stocks() {
   const [page, setPage] = useState(1);
   const count = 25;
 
+  // Fetch stocks from existing API
   useEffect(() => {
     const fetchStocks = async () => {
       setLoading(true);
       try {
-        // First get the raw text response
+        console.log("Fetching stocks...");
         const response = await axios.get(`${API_URL}/stocks`, {
-          params: { page, count },
-          transformResponse: [data => data] // Get raw response text
+          params: { page, count }
         });
-
-        // Transform the malformed JSON into proper JSON
-        const fixedJson = response.data
-          .replace(/"id/g, '{"id')       // Add missing { before each object
-          .replace(/\),/g, '},')         // Replace ), with },
-          .replace(/\)]/g, '}]')         // Replace )] with }]
-          .replace(/"\s+/g, '"')         // Remove any whitespace after quotes
-          .replace(/\s+"/g, '"');        // Remove any whitespace before quotes
-
-        // Parse the fixed JSON
-        const parsedData = JSON.parse(fixedJson);
-        setStocks(Array.isArray(parsedData) ? parsedData : []);
-        
+        console.log("API Response:", response);
+        setStocks(response.data);
       } catch (error) {
-        console.error('Error processing stocks data:', error);
-        setStocks([]);
+        console.error('Full error:', error);
+        console.log('Error response:', error.response);
       } finally {
         setLoading(false);
       }
     };
-
     fetchStocks();
   }, [page]);
 
-  // Get unique symbols from the fetched stocks
   const uniqueSymbols = [...new Set(stocks.map(stock => stock.symbol))];
 
   if (loading) return <div>Loading...</div>;
@@ -74,7 +61,7 @@ export default function Stocks() {
           {stocks.map(stock => (
             <tr key={stock.id}>
               <td>{stock.symbol}</td>
-              <td>${stock.price?.toFixed(2)}</td>
+              <td>${stock.price.toFixed(2)}</td>
               <td>{stock.short_name}</td>
               <td>{stock.quantity}</td>
               <td>{new Date(stock.timestamp).toLocaleDateString()}</td>
